@@ -50,7 +50,7 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long id,
-            @RequestBody TaskUpdateRequest request,
+            @Valid @RequestBody TaskUpdateRequest request,
             @AuthenticationPrincipal String email) {
         return ResponseEntity.ok(taskService.updateTask(id, request, email));
     }

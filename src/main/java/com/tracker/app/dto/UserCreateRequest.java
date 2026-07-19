@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 
 public record UserCreateRequest(
         @NotBlank(message = "Email is required")
-        @Email(message = "Invalid email format")
+        @Email(regexp = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$", message = "Invalid email format")
         String email,
 
         @NotBlank(message = "Password is required")

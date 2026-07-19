@@ -1,39 +1,46 @@
-version: "3.9"
-
+version: '3.8'
 services:
-  postgres:
+  db:
     image: postgres:16-alpine
-    container_name: tasktracker-postgres
-    restart: unless-stopped
+    container_name: task-tracker-db
     environment:
       POSTGRES_DB: tasktracker
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: tracker_user
+      POSTGRES_PASSWORD: TrackerPassword123!
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d tasktracker"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U tracker_user -d tasktracker"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: tasktracker-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@tracker.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task-tracker-backend
     ports:
-      - "5050:80"
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/tasktracker
+      - SPRING_DATASOURCE_USERNAME=tracker_user
+      - SPRING_DATASOURCE_PASSWORD=TrackerPassword123!
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: task-tracker-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
-  pgadmin_data:

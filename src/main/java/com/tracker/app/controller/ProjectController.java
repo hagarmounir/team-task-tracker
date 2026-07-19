@@ -35,8 +35,8 @@ public class ProjectController {
 
     @Operation(summary = "Get all projects")
     @GetMapping
-    public ResponseEntity<List<ProjectResponse>> getAllProjects() {
-        return ResponseEntity.ok(projectService.getAllProjects());
+    public ResponseEntity<List<ProjectResponse>> getAllProjects(@AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(projectService.getAllProjects(email));
     }
 
     @Operation(summary = "Get a project by ID")
@@ -49,7 +49,7 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ResponseEntity<ProjectResponse> updateProject(
             @PathVariable Long id,
-            @RequestBody ProjectUpdateRequest request,
+            @Valid @RequestBody ProjectUpdateRequest request,
             @AuthenticationPrincipal String email) {
         return ResponseEntity.ok(projectService.updateProject(id, request, email));
     }
@@ -62,6 +62,12 @@ public class ProjectController {
             @AuthenticationPrincipal String email) {
         projectService.addMember(projectId, userId, email);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Get all members of a project")
+    @GetMapping("/{projectId}/members")
+    public ResponseEntity<List<com.tracker.app.dto.UserResponse>> getProjectMembers(@PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.getProjectMembers(projectId));
     }
 
     @Operation(summary = "Remove a member from a project (ADMIN, PM only)")

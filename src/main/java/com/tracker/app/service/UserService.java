@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -82,7 +84,12 @@ public class UserService {
             target.setEmail(request.email());
         }
 
-
+        if (request.role() != null) {
+            if (!isAdmin) {
+                throw new AccessDeniedException("Only Administrators can change user roles");
+            }
+            target.setRole(request.role());
+        }
 
         target.setUpdatedAt(OffsetDateTime.now());
         User saved = userRepository.save(target);
@@ -133,6 +140,19 @@ public class UserService {
 
         log.info("User [id={}] deactivated by admin [{}]", targetUserId, requesterEmail);
         activityLogService.logActivity("USER", target.getId(), "DEACTIVATED", requester, "User account deactivated");
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getUserByEmail(String email) {
+        User user = findUserByEmail(email);
+        return mapToResponse(user);
     }
 
     /**

@@ -51,8 +51,17 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectResponse> getAllProjects() {
-        return projectRepository.findAll().stream().map(this::mapToResponse).toList();
+    public List<ProjectResponse> getAllProjects(String requesterEmail) {
+        User requester = findUserByEmail(requesterEmail);
+        
+        List<Project> projects;
+        if (requester.getRole() == com.tracker.app.enums.UserRole.MEMBER) {
+            projects = projectRepository.findByMembersId(requester.getId());
+        } else {
+            projects = projectRepository.findAll();
+        }
+        
+        return projects.stream().map(this::mapToResponse).toList();
     }
 
     @Transactional
@@ -135,6 +144,21 @@ public class ProjectService {
         log.info("User [{}] removed from project [id={}] by [{}]", userId, projectId, requesterEmail);
         activityLogService.logActivity("PROJECT", projectId, "MEMBER_REMOVED", requester,
                 "User " + userToRemove.getEmail() + " removed from project");
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.tracker.app.dto.UserResponse> getProjectMembers(Long projectId) {
+        Project project = findProjectById(projectId);
+        return project.getMembers().stream()
+                .map(user -> new com.tracker.app.dto.UserResponse(
+                        user.getId(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.isActive(),
+                        user.getCreatedAt(),
+                        user.getUpdatedAt()
+                ))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     // --- Private helpers ---

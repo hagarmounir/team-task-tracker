@@ -34,6 +34,18 @@ public class UserController {
         return ResponseEntity.ok(userService.login(request.email(), request.password()));
     }
 
+    @Operation(summary = "Get all users (for assigning members)")
+    @GetMapping
+    public ResponseEntity<java.util.List<UserResponse>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @Operation(summary = "Get current authenticated user")
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser(@org.springframework.security.core.annotation.AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(userService.getUserByEmail(email));
+    }
+
     @Operation(summary = "Update user profile (Own profile or ADMIN)")
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
