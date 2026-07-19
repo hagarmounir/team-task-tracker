@@ -85,12 +85,27 @@ public class ProjectService {
     }
 
     @Transactional
+    public void deleteProject(Long projectId, String requesterEmail) {
+        Project project = findProjectById(projectId);
+        User requester = findUserByEmail(requesterEmail);
+
+        log.info("Project deleted [id={}] by user [{}]", projectId, requesterEmail);
+        activityLogService.logActivity("PROJECT", projectId, "DELETED", requester,
+                "Project deleted: " + project.getName());
+
+        projectRepository.delete(project);
+    }
+
+    @Transactional
     public void addMember(Long projectId, Long userId, String requesterEmail) {
         Project project = findProjectById(projectId);
         User userToAdd = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         User requester = findUserByEmail(requesterEmail);
 
+        if (!userToAdd.isActive()) {
+            throw new IllegalArgumentException("Cannot add a deactivated user to a project");
+        }
         if (project.getMembers().contains(userToAdd)) {
             throw new IllegalStateException("User is already a member of this project");
         }
@@ -130,8 +145,8 @@ public class ProjectService {
     }
 
     private User findUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
+        return userRepository.findByEmailAndIsActiveTrue(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found or is deactivated: " + email));
     }
 
     private ProjectResponse mapToResponse(Project project) {

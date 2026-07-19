@@ -63,4 +63,24 @@ public class TaskController {
             @AuthenticationPrincipal String email) {
         return ResponseEntity.ok(taskService.updateTaskStatus(id, request, email));
     }
+
+    @Operation(summary = "Delete a task (ADMIN, PM only)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTask(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String email) {
+        taskService.deleteTask(id, email);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Search and filter tasks")
+    @GetMapping("/search")
+    public ResponseEntity<List<TaskResponse>> searchTasks(
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) Long assigneeId,
+            @RequestParam(required = false) com.tracker.app.enums.TaskStatus status,
+            @RequestParam(required = false) java.time.LocalDate dueDateFrom,
+            @RequestParam(required = false) java.time.LocalDate dueDateTo) {
+        return ResponseEntity.ok(taskService.searchTasks(projectId, assigneeId, status, dueDateFrom, dueDateTo));
+    }
 }

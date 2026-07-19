@@ -14,5 +14,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Leverages our partial index (idx_active_users) for fast lookups
     Optional<User> findByEmailAndIsActiveTrue(String email);
 
+    Optional<User> findByIdAndIsActiveTrue(Long id);
+
     boolean existsByEmail(String email);
 }

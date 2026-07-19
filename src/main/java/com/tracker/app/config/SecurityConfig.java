@@ -35,11 +35,17 @@ public class SecurityConfig {
                     "/swagger-ui/**", "/swagger-ui.html",
                     "/v3/api-docs/**"
                 ).permitAll()
-                // Project creation and updates are restricted to ADMIN and PM
+                // Project creation, updates, and deletion are restricted to ADMIN and PM
                 .requestMatchers(HttpMethod.POST, "/api/projects").hasAnyRole("ADMINISTRATOR", "PROJECT_MANAGER")
                 .requestMatchers(HttpMethod.PUT, "/api/projects/**").hasAnyRole("ADMINISTRATOR", "PROJECT_MANAGER")
+                .requestMatchers(HttpMethod.DELETE, "/api/projects/**").hasAnyRole("ADMINISTRATOR", "PROJECT_MANAGER")
                 // Member management sub-resource is restricted to ADMIN and PM
                 .requestMatchers("/api/projects/*/members/**").hasAnyRole("ADMINISTRATOR", "PROJECT_MANAGER")
+                // Task deletion is restricted to ADMIN and PM
+                .requestMatchers(HttpMethod.DELETE, "/api/tasks/**").hasAnyRole("ADMINISTRATOR", "PROJECT_MANAGER")
+                // User deactivation/activation is restricted to ADMIN
+                .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMINISTRATOR")
+                .requestMatchers(HttpMethod.PUT, "/api/users/*/activate").hasRole("ADMINISTRATOR")
                 // All other requests require any authenticated user
                 .anyRequest().authenticated()
             )

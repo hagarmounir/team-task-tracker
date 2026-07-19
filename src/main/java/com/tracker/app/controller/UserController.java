@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Users", description = "User registration and authentication")
 public class UserController {
 
@@ -31,5 +32,42 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(userService.login(request.email(), request.password()));
+    }
+
+    @Operation(summary = "Update user profile (Own profile or ADMIN)")
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody com.tracker.app.dto.UserUpdateRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(userService.updateUser(id, request, email));
+    }
+
+    @Operation(summary = "Change own password")
+    @PutMapping("/{id}/password")
+    public ResponseEntity<Void> changePassword(
+            @PathVariable Long id,
+            @Valid @RequestBody com.tracker.app.dto.UserPasswordUpdateRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal String email) {
+        userService.changePassword(id, request, email);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Deactivate a user (ADMIN only)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deactivateUser(
+            @PathVariable Long id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal String email) {
+        userService.deactivateUser(id, email);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Reactivate a user (ADMIN only)")
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<Void> activateUser(
+            @PathVariable Long id,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal String email) {
+        userService.activateUser(id, email);
+        return ResponseEntity.noContent().build();
     }
 }

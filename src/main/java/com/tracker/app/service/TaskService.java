@@ -11,6 +11,7 @@ import com.tracker.app.enums.TaskStatus;
 import com.tracker.app.enums.UserRole;
 import com.tracker.app.repository.ProjectRepository;
 import com.tracker.app.repository.TaskRepository;
+import com.tracker.app.repository.TaskSpecification;
 import com.tracker.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -76,6 +78,20 @@ public class TaskService {
     @Transactional(readOnly = true)
     public List<TaskResponse> getTasksByProject(Long projectId) {
         return taskRepository.findByProjectId(projectId).stream().map(this::mapToResponse).toList();
+    }
+
+    /**
+     * Dynamic filtered search. All parameters are optional — pass null to skip a filter.
+     * dueDateFrom / dueDateTo define an inclusive date range.
+     */
+    @Transactional(readOnly = true)
+    public List<TaskResponse> searchTasks(Long projectId, Long assigneeId, TaskStatus status,
+                                          LocalDate dueDateFrom, LocalDate dueDateTo) {
+        return taskRepository
+                .findAll(TaskSpecification.withFilters(projectId, assigneeId, status, dueDateFrom, dueDateTo))
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Transactional
@@ -150,22 +166,38 @@ public class TaskService {
         return mapToResponse(saved);
     }
 
+    @Transactional
+    public void deleteTask(Long taskId, String requesterEmail) {
+        Task task = findTaskById(taskId);
+        User requester = findUserByEmail(requesterEmail);
+
+        // Business rule: MEMBER cannot delete tasks
+        if (requester.getRole() == UserRole.MEMBER) {
+            throw new AccessDeniedException("Members are not allowed to delete tasks");
+        }
+
+        log.info("Task deleted [id={}] by [{}]", taskId, requesterEmail);
+        activityLogService.logActivity("TASK", taskId, "DELETED", requester,
+                "Task deleted: " + task.getTitle());
+
+        taskRepository.delete(task);
+    }
+
     // --- State machine ---
 
     private void validateStateTransition(TaskStatus current, TaskStatus next) {
         if (current == next) return;
 
         boolean valid = switch (current) {
-            case TODO       -> next == TaskStatus.IN_PROGRESS || next == TaskStatus.CANCELLED;
+            case TODO        -> next == TaskStatus.IN_PROGRESS || next == TaskStatus.CANCELLED;
             case IN_PROGRESS -> next == TaskStatus.DONE || next == TaskStatus.TODO || next == TaskStatus.CANCELLED;
-            case DONE       -> next == TaskStatus.REOPENED;
-            case REOPENED   -> next == TaskStatus.IN_PROGRESS || next == TaskStatus.CANCELLED;
-            case CANCELLED  -> next == TaskStatus.REOPENED;
+            case DONE        -> next == TaskStatus.REOPENED;
+            case REOPENED    -> next == TaskStatus.IN_PROGRESS || next == TaskStatus.CANCELLED;
+            case CANCELLED   -> next == TaskStatus.REOPENED;
         };
 
         if (!valid) {
-            throw new IllegalStateException(
-                    "Invalid status transition from " + current + " to " + next);
+            throw new IllegalStateException("Invalid status transition from " + current + " to " + next);
         }
     }
 
@@ -182,13 +214,13 @@ public class TaskService {
     }
 
     private User findUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
+        return userRepository.findByEmailAndIsActiveTrue(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found or is deactivated: " + email));
     }
 
     private User findUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+        return userRepository.findByIdAndIsActiveTrue(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found or is deactivated: " + id));
     }
 
     private TaskResponse mapToResponse(Task task) {

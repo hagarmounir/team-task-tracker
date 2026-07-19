@@ -73,4 +73,13 @@ public class ProjectController {
         projectService.removeMember(projectId, userId, email);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Delete a project (ADMIN, PM only)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProject(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String email) {
+        projectService.deleteProject(id, email);
+        return ResponseEntity.noContent().build();
+    }
 }

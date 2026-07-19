@@ -37,4 +37,22 @@ public class CommentController {
     public ResponseEntity<List<CommentResponse>> getCommentsByTask(@PathVariable Long taskId) {
         return ResponseEntity.ok(commentService.getCommentsByTask(taskId));
     }
+
+    @Operation(summary = "Update a comment (Author only)")
+    @PutMapping("/{id}")
+    public ResponseEntity<CommentResponse> updateComment(
+            @PathVariable Long id,
+            @Valid @RequestBody com.tracker.app.dto.CommentUpdateRequest request,
+            @AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(commentService.updateComment(id, request, email));
+    }
+
+    @Operation(summary = "Delete a comment (Author or ADMIN/PM)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String email) {
+        commentService.deleteComment(id, email);
+        return ResponseEntity.noContent().build();
+    }
 }
