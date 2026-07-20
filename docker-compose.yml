@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: tracker_user
       POSTGRES_PASSWORD: TrackerPassword123!
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,7 +23,7 @@ services:
       dockerfile: Dockerfile
     container_name: task-tracker-backend
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/tasktracker
       - SPRING_DATASOURCE_USERNAME=tracker_user

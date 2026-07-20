@@ -34,9 +34,9 @@ The easiest way to run the entire application (Database, Backend, and Frontend).
 docker-compose up -d --build
 ```
 This spins up the following services:
-- **PostgreSQL Database** on `localhost:5432`
+- **PostgreSQL Database** on `localhost:5433`
 - **pgAdmin** on `http://localhost:5050` (login: `admin@tracker.com` / `admin`)
-- **Spring Boot Backend** on `http://localhost:8080` (Auto-runs Flyway schema migrations)
+- **Spring Boot Backend** on `http://localhost:8081` (Auto-runs Flyway schema migrations)
 - **React Frontend** (via Nginx) on `http://localhost:80` (or `localhost:5173` depending on port mappings)
 
 ### Option B: Local Development Setup
@@ -58,7 +58,7 @@ docker-compose up -d postgres pgadmin
 ./mvnw clean package -DskipTests
 ./mvnw spring-boot:run
 ```
-*(Runs on `http://localhost:8080`. Swagger UI is available at `/swagger-ui.html`)*
+*(Runs on `http://localhost:8081`. Swagger UI is available at `/swagger-ui.html`)*
 
 **3. Start the React Frontend**
 ```bash

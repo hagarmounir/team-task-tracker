@@ -2,8 +2,11 @@ spring:
   application:
     name: team-task-tracker
 
+server:
+  port: 8081
+
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tasktracker}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:tasktracker}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
